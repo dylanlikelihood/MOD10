@@ -1,23 +1,10 @@
 ---
 title: "Mod 10 Data Discovery"
-author: "Dylan Armbruster"
 format: html
 editor: visual
 ---
 
-**Tasks:**
-
--   Perform exploratory data analysis.  Use facet plotting (if you have a numeric predictor) or box plots (if you have a categorical predictor) to see how the relationship between the response and predictor varies across the random effect. (Task 1 EDA)
-
--   Use some numeric summaries along with your graphs to assess whether you think your random effects model should have random intercepts only or random slope and random intercepts.  This could be computing and tabulating means for each random effect across each categorical predictor, or computing a regression line for each random effect grouping and seeing how the slopes and intercepts vary. (Task 2)
-
--   Fit several models (naive model that ignores random effect, random intercepts model, random slopes and random intercepts model) (task 3)
-
--   Compare models using AIC and determine the best-fitting (Task 4)
-
--   Perform inference for the fixed effect using your best-fitting model.  Interpret the coefficients. (task 5)
-
-Data:
+## **Dataset:**
 
 **Galton Heights:** The data set Galton in the mosaicData package has parent and adult child heights for around 200 families.  Note that all female heights were multiplied by 1.08.  Use midparent height to predict child height with family as a random effect.
 
@@ -38,13 +25,13 @@ library(tidyr)
 |------------------------|------------------------|------------------------|
 | family | Categorica (Factor) | 197 levels |
 | father height | Continuous | inches |
-| mother height | Continuous | inches |
+| mother height | Continuous | inches (multiplied by 1.08) |
 | sex | Categorical(Factor) | 2 levels, child's sex |
 | height | Continuous | the child's height as an adult (in inches) |
 | nkids | Integer | the number of adult children in the family, or, at least, the number whose heights Galton recorded. |
 | midparent_height | Continuous | Computed field: Father_height + Mother_Height / 2 |
 
-## Data Pre-Processing
+Data Pre-Processing
 
 ```{r, include = F}
 
@@ -52,9 +39,7 @@ library(tidyr)
 
 data("Galton")
 
-galton = Galton
-
-df = as.data.frame(df)
+df = as_tibble(Galton)
 
 nrow(df) # 898
 
@@ -259,9 +244,7 @@ ggplot(
     )
 ```
 
-## Task 2
-
--   Use some numeric summaries along with your graphs to assess whether you think your random effects model should have random intercepts only or random slope and random intercepts.  This could be computing and tabulating means for each random effect across each categorical predictor, or computing a regression line for each random effect grouping and seeing how the slopes and intercepts vary.
+## Task 2: Random Intercept or Random Slope?
 
 ```{r, echo = F}
 
@@ -312,27 +295,7 @@ ggplot(
     subtitle = "Scatteredpoints = Intercepts Vary")
 ```
 
-```{r, inclue = F}
-
-## model with just random intercept
-
-model = lme4::lmer(
-  height ~ midparent_height + (1 | family),
-  data = df
-  )
-
-# intra vamily correlation
-
-var_components = as.data.frame(VarCorr(model))
-
-icc = var_components$vcov[1] / sum(var_components$vcov)
-
-icc # 0.07490798
-
-# Weak within-family correlation. Start with random intercept
-```
-
-## Task 3, 4
+## Task 3, 4: Fitting Several Models, Comparing AIC
 
 ```{r, echo = F}
 
@@ -361,6 +324,9 @@ plot(
   y = resid(mod1),
   x = fitted(mod1)
 )
+  
 ```
 
-## Task 5
+## Task 5: Inference
+
+The slightly lower AIC of mod1 (4742.830) compared to mod0 (4743.825) indicates it is a slightly better linear model which suggests that the family from which a child comes has an effect on child height. Both models consider midparent height as a fixed effect, with similar slopes of 0.6693 and 0.64264 for mod0 and mod1 respectively. However, mod1 also recognizes the lack of independence of measurements within each family. The variance of the family intercept of mod1 (0.8615) means that while family may play a small role in the height of the child and that child height is not greatly influenced by family despite the non-independence. Validating our model select, we can see that from the residual plot, we can see there is a lot of scatter which means mod1 is behaving well with respect to the linear model assumptions.
